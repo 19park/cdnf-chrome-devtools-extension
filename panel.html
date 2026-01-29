@@ -57,6 +57,12 @@
       background: #e8e8e8;
     }
 
+    .toolbar button.active {
+      background: #d3e3fd;
+      color: #1a73e8;
+      border-color: #1a73e8;
+    }
+
     /* --- Filter bar --- */
     .filter-bar {
       display: flex;
@@ -488,12 +494,72 @@
       .header-table .h-val { color: #e8eaed; }
       .general-url { color: #8ab4f8; }
     }
+
+    /* --- High Contrast theme --- */
+    body.high-contrast { background: #000; color: #fff; }
+    body.high-contrast .toolbar { background: #111; border-color: #fff; }
+    body.high-contrast .toolbar .domain { color: #00e5ff; }
+    body.high-contrast .toolbar button { background: #222; color: #fff; border-color: #888; }
+    body.high-contrast .toolbar button:hover { background: #444; }
+    body.high-contrast .toolbar button.active { background: #003d5c; color: #00e5ff; border-color: #00e5ff; }
+    body.high-contrast .toolbar .count { color: #ccc; }
+    body.high-contrast .filter-bar { background: #0a0a0a; border-color: #fff; }
+    body.high-contrast .filter-btn { color: #ccc; }
+    body.high-contrast .filter-btn:hover { background: #333; color: #fff; }
+    body.high-contrast .filter-btn.active { background: #003d5c; color: #00e5ff; font-weight: 600; }
+    body.high-contrast .search-input { background: #111; color: #fff; border-color: #888; }
+    body.high-contrast .search-input:focus { border-color: #00e5ff; box-shadow: 0 0 0 1px #00e5ff; }
+    body.high-contrast .search-input::placeholder { color: #888; }
+    body.high-contrast .filter-sep { background: #666; }
+    body.high-contrast th { background: #111; border-color: #fff; color: #fff; font-weight: 500; }
+    body.high-contrast th[data-sort]:hover { color: #00e5ff; }
+    body.high-contrast .sort-arrow { color: #00e5ff; }
+    body.high-contrast td { border-color: #333; color: #fff; }
+    body.high-contrast tr:hover td { background: #1a1a2e; }
+    body.high-contrast tr.selected td { background: #003366; }
+    body.high-contrast tr.selected:hover td { background: #003366; }
+    body.high-contrast .status-err { color: #ff5252; }
+    body.high-contrast .status-redirect { color: #ffff00; }
+    body.high-contrast .status-pending { color: #888; }
+    body.high-contrast tr.pending td { color: #888; }
+    body.high-contrast .size-cache { color: #aaa; }
+    body.high-contrast .path-name { color: #00e5ff; font-weight: 600; }
+    body.high-contrast .time-warn { color: #ffff00 !important; }
+    body.high-contrast .time-slow { color: #ff5252 !important; }
+    body.high-contrast .empty-msg { color: #888; }
+    @keyframes row-flash-hc {
+      0%   { background: #003366; }
+      100% { background: transparent; }
+    }
+    body.high-contrast tr.new-row td { animation: row-flash-hc 1.2s ease-out; }
+    body.high-contrast .detail-pane { border-color: #fff; }
+    body.high-contrast .detail-tabs { background: #111; border-color: #fff; }
+    body.high-contrast .detail-tab { color: #ccc; }
+    body.high-contrast .detail-tab:hover { color: #fff; background: #333; }
+    body.high-contrast .detail-tab.active { color: #00e5ff; border-bottom-color: #00e5ff; }
+    body.high-contrast .detail-close { color: #ccc; }
+    body.high-contrast .detail-close:hover { color: #fff; background: #333; }
+    body.high-contrast .header-section-title { color: #fff; font-weight: 600; }
+    body.high-contrast .header-table .h-name { color: #ff80ab; }
+    body.high-contrast .header-table .h-val { color: #fff; }
+    body.high-contrast .general-url { color: #00e5ff; }
+    body.high-contrast .jt-toggle { color: #aaa; }
+    body.high-contrast .jt-toggle:hover { color: #fff; }
+    body.high-contrast .jt-key { color: #ff80ab; }
+    body.high-contrast .jt-colon { color: #fff; }
+    body.high-contrast .jt-str { color: #ff8a80; }
+    body.high-contrast .jt-num { color: #82b1ff; }
+    body.high-contrast .jt-bool { color: #69f0ae; }
+    body.high-contrast .jt-null { color: #aaa; }
+    body.high-contrast .jt-brace { color: #fff; }
+    body.high-contrast .jt-summary { color: #aaa; }
   </style>
 </head>
 <body>
   <div class="toolbar">
     <span class="domain" id="domain">&mdash;</span>
     <button id="clearBtn">Clear</button>
+    <button id="themeBtn" title="Toggle High Contrast">HC</button>
     <span class="count" id="count"></span>
   </div>
 

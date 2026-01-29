@@ -10,6 +10,7 @@ const detailTabs = document.getElementById("detailTabs");
 const detailBody = document.getElementById("detailBody");
 const detailClose = document.getElementById("detailClose");
 const searchInput = document.getElementById("searchInput");
+const themeBtn = document.getElementById("themeBtn");
 
 let currentHostname = "";
 let entries = []; // { entry, tr, category, pending }
@@ -864,6 +865,23 @@ function getResponseBody(entry, cb) {
 function tryFormatJSON(str) {
   try { return JSON.stringify(JSON.parse(str), null, 2); } catch { return str; }
 }
+
+// --- Theme ---
+
+let highContrast = localStorage.getItem("cdnf-high-contrast") === "true";
+
+function applyTheme() {
+  document.body.classList.toggle("high-contrast", highContrast);
+  themeBtn.classList.toggle("active", highContrast);
+}
+
+themeBtn.addEventListener("click", () => {
+  highContrast = !highContrast;
+  localStorage.setItem("cdnf-high-contrast", String(highContrast));
+  applyTheme();
+});
+
+applyTheme();
 
 // --- Event listeners ---
 
