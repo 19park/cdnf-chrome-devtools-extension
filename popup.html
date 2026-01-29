@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 260px;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 13px;
+      color: #222;
+      background: #fff;
+      padding: 16px;
+    }
+
+    .title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .domain-label {
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 2px;
+    }
+
+    .domain-value {
+      font-family: Menlo, Consolas, monospace;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1a73e8;
+      margin-bottom: 14px;
+      word-break: break-all;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #e8e8e8;
+      margin: 12px 0;
+    }
+
+    .shortcut-section {
+      margin-bottom: 4px;
+    }
+
+    .shortcut-label {
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 6px;
+    }
+
+    .shortcut-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .shortcut-desc {
+      font-size: 12px;
+      color: #444;
+    }
+
+    kbd {
+      display: inline-block;
+      padding: 2px 6px;
+      font-family: Menlo, Consolas, monospace;
+      font-size: 11px;
+      background: #f3f3f3;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      color: #333;
+      white-space: nowrap;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: #999;
+      line-height: 1.5;
+      margin-top: 6px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body { background: #292a2d; color: #e8eaed; }
+      .domain-value { color: #8ab4f8; }
+      .divider { border-color: #555; }
+      .shortcut-desc { color: #bbb; }
+      kbd { background: #3c3c3c; border-color: #555; color: #e8eaed; }
+      .hint { color: #777; }
+    }
+  </style>
+</head>
+<body>
+  <div class="title">Net Filter</div>
+  <div class="domain-label">Current Domain</div>
+  <div class="domain-value" id="domain">—</div>
+
+  <hr class="divider" />
+
+  <div class="shortcut-section">
+    <div class="shortcut-label">Open DevTools</div>
+    <div class="shortcut-row">
+      <span class="shortcut-desc">macOS</span>
+      <span><kbd>⌘</kbd> <kbd>⌥</kbd> <kbd>I</kbd></span>
+    </div>
+    <div class="shortcut-row">
+      <span class="shortcut-desc">Windows / Linux</span>
+      <span><kbd>F12</kbd></span>
+    </div>
+  </div>
+
+  <div class="hint">
+    DevTools → <strong>Net Filter</strong> 탭에서 도메인 필터링된 네트워크 요청을 확인할 수 있습니다.
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

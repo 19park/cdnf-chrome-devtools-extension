@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+      font-size: 11px;
+      color: #222;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* --- Toolbar --- */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 8px;
+      border-bottom: 1px solid #dadce0;
+      background: #f3f3f3;
+      flex-shrink: 0;
+    }
+
+    .toolbar .domain {
+      font-weight: 600;
+      color: #1a73e8;
+    }
+
+    .toolbar .count {
+      color: #888;
+      margin-left: auto;
+      white-space: nowrap;
+    }
+
+    .toolbar button {
+      padding: 2px 8px;
+      font-size: 11px;
+      font-family: inherit;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      background: #fff;
+      color: #333;
+    }
+
+    .toolbar button:hover {
+      background: #e8e8e8;
+    }
+
+    /* --- Filter bar --- */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 3px 8px;
+      border-bottom: 1px solid #dadce0;
+      background: #f8f9fa;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 2px 8px;
+      font-size: 11px;
+      font-family: system-ui, -apple-system, sans-serif;
+      cursor: pointer;
+      border: none;
+      border-radius: 3px;
+      background: transparent;
+      color: #5f6368;
+      white-space: nowrap;
+    }
+
+    .filter-btn:hover {
+      background: #e8eaed;
+      color: #202124;
+    }
+
+    .filter-btn.active {
+      background: #d3e3fd;
+      color: #1a73e8;
+      font-weight: 500;
+    }
+
+    .filter-sep {
+      width: 1px;
+      height: 14px;
+      background: #dadce0;
+      margin: 0 4px;
+    }
+
+    /* --- Table list --- */
+    .list-pane {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 60px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    th {
+      background: #f3f3f3;
+      border-bottom: 1px solid #ccc;
+      padding: 3px 6px;
+      text-align: left;
+      font-weight: normal;
+      color: #666;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    td {
+      padding: 2px 6px;
+      border-bottom: 1px solid #eee;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+    }
+
+    tr.selected td {
+      background: #cfe8fc;
+    }
+
+    tr:hover td {
+      background: #edf4ff;
+    }
+
+    tr.selected:hover td {
+      background: #cfe8fc;
+    }
+
+    tr.hidden {
+      display: none;
+    }
+
+    .col-method { width: 50px; }
+    .col-status { width: 46px; }
+    .col-name   { width: auto; }
+    .col-type   { width: 90px; }
+    .col-size   { width: 64px; text-align: right; }
+    .col-time   { width: 60px; text-align: right; }
+
+    td.col-size, th.col-size,
+    td.col-time, th.col-time {
+      text-align: right;
+    }
+
+    .status-err { color: #d93025; }
+    .status-redirect { color: #e37400; }
+
+    .status-pending {
+      color: #999;
+      font-style: italic;
+    }
+
+    tr.pending td {
+      color: #999;
+    }
+
+    .size-cache {
+      color: #888;
+      font-size: 10px;
+    }
+
+    .path-name {
+      color: #1a73e8;
+      font-weight: 500;
+    }
+
+    /* New row flash */
+    @keyframes row-flash {
+      0%   { background: #e8f0fe; }
+      100% { background: transparent; }
+    }
+
+    tr.new-row td {
+      animation: row-flash 1.2s ease-out;
+    }
+
+    .empty-msg {
+      padding: 24px;
+      text-align: center;
+      color: #999;
+      font-family: system-ui, sans-serif;
+    }
+
+    /* --- Detail pane --- */
+    .detail-pane {
+      display: none;
+      flex-direction: column;
+      border-top: 1px solid #ccc;
+      height: 45%;
+      min-height: 120px;
+      flex-shrink: 0;
+    }
+
+    .detail-pane.open {
+      display: flex;
+    }
+
+    .detail-tabs {
+      display: flex;
+      background: #f3f3f3;
+      border-bottom: 1px solid #ccc;
+      flex-shrink: 0;
+    }
+
+    .detail-tab {
+      padding: 4px 12px;
+      cursor: pointer;
+      color: #555;
+      border-bottom: 2px solid transparent;
+      font-family: system-ui, sans-serif;
+      font-size: 11px;
+    }
+
+    .detail-tab:hover {
+      color: #222;
+      background: #e8e8e8;
+    }
+
+    .detail-tab.active {
+      color: #1a73e8;
+      border-bottom-color: #1a73e8;
+    }
+
+    .detail-close {
+      margin-left: auto;
+      padding: 4px 10px;
+      cursor: pointer;
+      color: #888;
+      font-size: 13px;
+      font-family: system-ui, sans-serif;
+    }
+
+    .detail-close:hover {
+      color: #222;
+      background: #e8e8e8;
+    }
+
+    .detail-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 12px;
+    }
+
+    /* --- Detail content styles --- */
+    .header-section {
+      margin-bottom: 12px;
+    }
+
+    .header-section-title {
+      font-family: system-ui, sans-serif;
+      font-weight: 600;
+      font-size: 11px;
+      margin-bottom: 4px;
+      color: #333;
+    }
+
+    .header-table {
+      width: 100%;
+      table-layout: auto;
+      border-collapse: collapse;
+    }
+
+    .header-table td {
+      padding: 1px 6px 1px 0;
+      border: none;
+      vertical-align: top;
+      white-space: normal;
+      word-break: break-all;
+      cursor: default;
+    }
+
+    .header-table .h-name {
+      color: #881280;
+      white-space: nowrap;
+      width: 1%;
+      padding-right: 8px;
+    }
+
+    .header-table .h-val {
+      color: #222;
+    }
+
+    .payload-raw, .response-raw {
+      white-space: pre-wrap;
+      word-break: break-all;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .preview-frame {
+      white-space: pre-wrap;
+      word-break: break-all;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    /* --- JSON tree --- */
+    .json-tree {
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    .jt-row {
+      white-space: nowrap;
+    }
+
+    .jt-toggle {
+      display: inline-block;
+      width: 12px;
+      cursor: pointer;
+      user-select: none;
+      color: #888;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .jt-toggle:hover {
+      color: #333;
+    }
+
+    .jt-key {
+      color: #881280;
+    }
+
+    .jt-colon {
+      color: #222;
+    }
+
+    .jt-str   { color: #c41a16; }
+    .jt-num   { color: #1c00cf; }
+    .jt-bool  { color: #0d6efd; }
+    .jt-null  { color: #808080; }
+    .jt-brace { color: #222; }
+
+    .jt-summary {
+      color: #888;
+      font-style: italic;
+      cursor: pointer;
+    }
+
+    .jt-children {
+      padding-left: 16px;
+    }
+
+    .jt-children.collapsed {
+      display: none;
+    }
+
+    .jt-ellipsis {
+      display: none;
+    }
+
+    .jt-children.collapsed + .jt-ellipsis {
+      display: inline;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .jt-toggle       { color: #777; }
+      .jt-toggle:hover  { color: #ccc; }
+      .jt-key    { color: #c58af9; }
+      .jt-colon  { color: #e8eaed; }
+      .jt-str    { color: #f28b82; }
+      .jt-num    { color: #8ab4f8; }
+      .jt-bool   { color: #81c995; }
+      .jt-null   { color: #9aa0a6; }
+      .jt-brace  { color: #e8eaed; }
+      .jt-summary { color: #9aa0a6; }
+    }
+
+    .general-url {
+      color: #1a73e8;
+      word-break: break-all;
+    }
+
+    /* --- Dark mode --- */
+    @media (prefers-color-scheme: dark) {
+      body { background: #292a2d; color: #e8eaed; }
+      .toolbar { background: #3c3c3c; border-color: #555; }
+      .toolbar .domain { color: #8ab4f8; }
+      .toolbar button { background: #4a4a4a; color: #e8eaed; border-color: #666; }
+      .toolbar button:hover { background: #5a5a5a; }
+      .filter-bar { background: #353536; border-color: #555; }
+      .filter-btn { color: #9aa0a6; }
+      .filter-btn:hover { background: #4a4a4a; color: #e8eaed; }
+      .filter-btn.active { background: #394457; color: #8ab4f8; }
+      .filter-sep { background: #555; }
+      th { background: #3c3c3c; border-color: #555; color: #9aa0a6; }
+      td { border-color: #3c3c3c; }
+      tr:hover td { background: #3c4043; }
+      tr.selected td { background: #394457; }
+      tr.selected:hover td { background: #394457; }
+      .status-err { color: #f28b82; }
+      .status-redirect { color: #fdd663; }
+      .status-pending { color: #777; }
+      tr.pending td { color: #777; }
+      .size-cache { color: #777; }
+      .path-name { color: #8ab4f8; }
+      @keyframes row-flash {
+        0%   { background: #394457; }
+        100% { background: transparent; }
+      }
+      .detail-pane { border-color: #555; }
+      .detail-tabs { background: #3c3c3c; border-color: #555; }
+      .detail-tab { color: #9aa0a6; }
+      .detail-tab:hover { color: #e8eaed; background: #4a4a4a; }
+      .detail-tab.active { color: #8ab4f8; border-bottom-color: #8ab4f8; }
+      .detail-close:hover { color: #e8eaed; background: #4a4a4a; }
+      .header-section-title { color: #e8eaed; }
+      .header-table .h-name { color: #c58af9; }
+      .header-table .h-val { color: #e8eaed; }
+      .general-url { color: #8ab4f8; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <span class="domain" id="domain">&mdash;</span>
+    <button id="clearBtn">Clear</button>
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="filter-bar" id="filterBar">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <div class="filter-sep"></div>
+    <button class="filter-btn" data-filter="api">API</button>
+    <button class="filter-btn" data-filter="fetch">Fetch/XHR</button>
+    <button class="filter-btn" data-filter="doc">Doc</button>
+    <button class="filter-btn" data-filter="css">CSS</button>
+    <button class="filter-btn" data-filter="js">JS</button>
+    <button class="filter-btn" data-filter="img">Img</button>
+    <button class="filter-btn" data-filter="media">Media</button>
+    <button class="filter-btn" data-filter="font">Font</button>
+    <button class="filter-btn" data-filter="ws">WS</button>
+    <button class="filter-btn" data-filter="other">Other</button>
+  </div>
+
+  <div class="list-pane" id="listPane">
+    <table>
+      <thead>
+        <tr>
+          <th class="col-method">Method</th>
+          <th class="col-status">Status</th>
+          <th class="col-name">Name</th>
+          <th class="col-type">Type</th>
+          <th class="col-size">Size</th>
+          <th class="col-time">Time</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty-msg" id="emptyMsg">Waiting for requests&hellip;</div>
+  </div>
+
+  <div class="detail-pane" id="detailPane">
+    <div class="detail-tabs" id="detailTabs">
+      <div class="detail-tab active" data-tab="headers">Headers</div>
+      <div class="detail-tab" data-tab="payload">Payload</div>
+      <div class="detail-tab" data-tab="preview">Preview</div>
+      <div class="detail-tab" data-tab="response">Response</div>
+      <div class="detail-close" id="detailClose">&times;</div>
+    </div>
+    <div class="detail-body" id="detailBody"></div>
+  </div>
+
+  <script src="panel.js"></script>
+</body>
+</html>

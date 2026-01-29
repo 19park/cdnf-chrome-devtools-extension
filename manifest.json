@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Auto Network Domain Filter",
+  "version": "1.0.0",
+  "description": "DevTools에서 현재 접속 도메인을 자동 인식해 Network 필터를 적용하는 확장",
+  "devtools_page": "devtools.html",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Net Filter"
+  },
+  "permissions": ["webRequest", "activeTab"],
+  "host_permissions": ["<all_urls>"]
+}
