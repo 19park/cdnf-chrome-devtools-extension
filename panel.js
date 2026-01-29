@@ -9,6 +9,7 @@ const detailPane = document.getElementById("detailPane");
 const detailTabs = document.getElementById("detailTabs");
 const detailBody = document.getElementById("detailBody");
 const detailClose = document.getElementById("detailClose");
+const searchInput = document.getElementById("searchInput");
 
 let currentHostname = "";
 let entries = []; // { entry, tr, category, pending }
@@ -19,6 +20,9 @@ let activeFilter = "all";
 let autoScroll = true;
 let isLoadingExisting = false;
 let scrollRafId = null;
+let sortColumn = null;
+let sortDirection = 0; // 0=none, 1=asc, -1=desc
+let searchQuery = "";
 
 // Pending request tracking
 const pendingById = new Map();   // requestId -> entries[] index
@@ -101,6 +105,12 @@ function formatTime(ms) {
   if (ms <= 0) return "\u2014";
   if (ms < 1000) return Math.round(ms) + " ms";
   return (ms / 1000).toFixed(2) + " s";
+}
+
+function timeClass(ms) {
+  if (ms > 3000) return "time-slow";
+  if (ms > 1000) return "time-warn";
+  return "";
 }
 
 function shortType(mimeType) {
@@ -199,9 +209,15 @@ function categorizeWebRequestType(type) {
 }
 
 function isFilterVisible(url, category) {
-  if (activeFilter === "all") return true;
-  if (activeFilter === "api") return getPathname(url).startsWith("/api");
-  return category === activeFilter;
+  if (activeFilter !== "all") {
+    if (activeFilter === "api") {
+      if (!getPathname(url).startsWith("/api")) return false;
+    } else if (category !== activeFilter) {
+      return false;
+    }
+  }
+  if (searchQuery && !url.toLowerCase().includes(searchQuery)) return false;
+  return true;
 }
 
 // --- Auto-scroll ---
@@ -233,6 +249,83 @@ function scheduleScrollToBottom() {
     scrollRafId = null;
   });
 }
+
+// --- Column sorting ---
+
+function getSortValue(rec, col) {
+  if (rec.pending) {
+    if (col === "method") {
+      const cell = rec.tr.querySelector(".col-method");
+      return cell ? cell.textContent : "";
+    }
+    if (col === "name") return getPathname(rec.url || "");
+    if (col === "type") return rec.category;
+    return col === "status" ? Infinity : -1;
+  }
+  const entry = rec.entry;
+  if (!entry) return "";
+  switch (col) {
+    case "method": return entry.request.method || "";
+    case "status": return entry.response.status || 0;
+    case "name": return getPathname(entry.request.url);
+    case "type": return shortType(entry.response.content ? entry.response.content.mimeType : "");
+    case "size": {
+      const ts = entry._transferSize;
+      if (typeof ts === "number" && ts > 0) return ts;
+      const cs = entry.response.content ? entry.response.content.size : 0;
+      return cs || entry.response.bodySize || 0;
+    }
+    case "time": return entry.time || 0;
+    default: return "";
+  }
+}
+
+function sortRows() {
+  if (!sortColumn) {
+    entries.forEach(rec => tbody.appendChild(rec.tr));
+    return;
+  }
+  const sorted = [...entries].sort((a, b) => {
+    const va = getSortValue(a, sortColumn);
+    const vb = getSortValue(b, sortColumn);
+    let cmp;
+    if (typeof va === "number" && typeof vb === "number") {
+      cmp = va - vb;
+    } else {
+      cmp = String(va).localeCompare(String(vb));
+    }
+    return cmp * sortDirection;
+  });
+  sorted.forEach(rec => tbody.appendChild(rec.tr));
+}
+
+function updateSortIndicators() {
+  document.querySelectorAll("th[data-sort]").forEach(th => {
+    const arrow = th.querySelector(".sort-arrow");
+    if (arrow) arrow.remove();
+    if (th.dataset.sort === sortColumn && sortDirection !== 0) {
+      const span = document.createElement("span");
+      span.className = "sort-arrow";
+      span.textContent = sortDirection === 1 ? " \u25B2" : " \u25BC";
+      th.appendChild(span);
+    }
+  });
+}
+
+document.querySelectorAll("th[data-sort]").forEach(th => {
+  th.addEventListener("click", () => {
+    const col = th.dataset.sort;
+    if (sortColumn === col) {
+      if (sortDirection === 1) sortDirection = -1;
+      else { sortDirection = 0; sortColumn = null; }
+    } else {
+      sortColumn = col;
+      sortDirection = 1;
+    }
+    updateSortIndicators();
+    sortRows();
+  });
+});
 
 // --- Pending requests (from webRequest) ---
 
@@ -277,6 +370,7 @@ function onRequestStart(msg) {
   if (!isLoadingExisting && autoScroll) {
     scheduleScrollToBottom();
   }
+  if (sortColumn) sortRows();
 }
 
 function onRequestEnd(msg) {
@@ -305,6 +399,7 @@ function onRequestError(msg) {
     if (i !== -1) q.splice(i, 1);
     if (q.length === 0) urlQueue.delete(rec.url);
   }
+  if (sortColumn) sortRows();
 }
 
 // --- Completed requests (from devtools.network) ---
@@ -367,7 +462,7 @@ function updatePendingRow(idx, entry, requestId) {
     `<td class="col-name">${renderPathname(url)}</td>` +
     `<td class="col-type">${esc(shortType(res.content ? res.content.mimeType : ""))}</td>` +
     `<td class="col-size">${sizeHtml}</td>` +
-    `<td class="col-time">${formatTime(entry.time)}</td>`;
+    `<td class="col-time ${timeClass(entry.time)}">${formatTime(entry.time)}</td>`;
 
   tr.addEventListener("click", () => selectRow(tr, idx));
 
@@ -379,6 +474,7 @@ function updatePendingRow(idx, entry, requestId) {
     tr.classList.add("new-row");
     tr.addEventListener("animationend", () => tr.classList.remove("new-row"), { once: true });
   }
+  if (sortColumn) sortRows();
 }
 
 function addCompletedRow(entry) {
@@ -404,7 +500,7 @@ function addCompletedRow(entry) {
     `<td class="col-name">${renderPathname(url)}</td>` +
     `<td class="col-type">${esc(shortType(res.content ? res.content.mimeType : ""))}</td>` +
     `<td class="col-size">${formatSizeWithCache(entry)}</td>` +
-    `<td class="col-time">${formatTime(entry.time)}</td>`;
+    `<td class="col-time ${timeClass(entry.time)}">${formatTime(entry.time)}</td>`;
 
   tr.addEventListener("click", () => selectRow(tr, idx));
 
@@ -424,6 +520,7 @@ function addCompletedRow(entry) {
       scheduleScrollToBottom();
     }
   }
+  if (sortColumn) sortRows();
 }
 
 function formatSizeFromCache(entry) {
@@ -456,23 +553,29 @@ function clearRequests() {
   emptyMsg.style.display = "";
   closeDetail();
   autoScroll = true;
+  searchQuery = "";
+  searchInput.value = "";
+  sortColumn = null;
+  sortDirection = 0;
+  updateSortIndicators();
 }
 
 // --- Filter bar ---
 
-function applyFilter(filter) {
-  activeFilter = filter;
-
-  filterBar.querySelectorAll(".filter-btn").forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.filter === filter);
-  });
-
+function applyVisibility() {
   entries.forEach(({ entry, tr, category, url }) => {
     const reqUrl = entry ? entry.request.url : url;
     tr.classList.toggle("hidden", !isFilterVisible(reqUrl, category));
   });
-
   updateCount();
+}
+
+function applyFilter(filter) {
+  activeFilter = filter;
+  filterBar.querySelectorAll(".filter-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.filter === filter);
+  });
+  applyVisibility();
 }
 
 filterBar.addEventListener("click", (e) => {
@@ -480,6 +583,11 @@ filterBar.addEventListener("click", (e) => {
   if (btn && btn.dataset.filter) {
     applyFilter(btn.dataset.filter);
   }
+});
+
+searchInput.addEventListener("input", () => {
+  searchQuery = searchInput.value.toLowerCase();
+  applyVisibility();
 });
 
 // --- Detail pane ---

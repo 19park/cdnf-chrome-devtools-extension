@@ -92,6 +92,27 @@
       font-weight: 500;
     }
 
+    .search-input {
+      width: 160px;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-family: system-ui, -apple-system, sans-serif;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      background: #fff;
+      color: #333;
+      outline: none;
+    }
+
+    .search-input:focus {
+      border-color: #1a73e8;
+      box-shadow: 0 0 0 1px rgba(26,115,232,0.3);
+    }
+
+    .search-input::placeholder {
+      color: #999;
+    }
+
     .filter-sep {
       width: 1px;
       height: 14px;
@@ -204,6 +225,31 @@
       text-align: center;
       color: #999;
       font-family: system-ui, sans-serif;
+    }
+
+    /* --- Sort indicators --- */
+    th[data-sort] {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    th[data-sort]:hover {
+      color: #333;
+    }
+
+    .sort-arrow {
+      font-size: 9px;
+      color: #999;
+    }
+
+    /* --- Slow response --- */
+    .time-warn {
+      color: #e37400 !important;
+    }
+
+    .time-slow {
+      color: #d93025 !important;
+      font-weight: 500;
     }
 
     /* --- Detail pane --- */
@@ -408,6 +454,9 @@
       .filter-btn { color: #9aa0a6; }
       .filter-btn:hover { background: #4a4a4a; color: #e8eaed; }
       .filter-btn.active { background: #394457; color: #8ab4f8; }
+      .search-input { background: #3c3c3c; color: #e8eaed; border-color: #555; }
+      .search-input:focus { border-color: #8ab4f8; box-shadow: 0 0 0 1px rgba(138,180,248,0.3); }
+      .search-input::placeholder { color: #777; }
       .filter-sep { background: #555; }
       th { background: #3c3c3c; border-color: #555; color: #9aa0a6; }
       td { border-color: #3c3c3c; }
@@ -420,6 +469,10 @@
       tr.pending td { color: #777; }
       .size-cache { color: #777; }
       .path-name { color: #8ab4f8; }
+      th[data-sort]:hover { color: #e8eaed; }
+      .sort-arrow { color: #777; }
+      .time-warn { color: #fdd663 !important; }
+      .time-slow { color: #f28b82 !important; }
       @keyframes row-flash {
         0%   { background: #394457; }
         100% { background: transparent; }
@@ -445,6 +498,8 @@
   </div>
 
   <div class="filter-bar" id="filterBar">
+    <input type="text" class="search-input" id="searchInput" placeholder="Filter" />
+    <div class="filter-sep"></div>
     <button class="filter-btn active" data-filter="all">All</button>
     <div class="filter-sep"></div>
     <button class="filter-btn" data-filter="api">API</button>
@@ -463,12 +518,12 @@
     <table>
       <thead>
         <tr>
-          <th class="col-method">Method</th>
-          <th class="col-status">Status</th>
-          <th class="col-name">Name</th>
-          <th class="col-type">Type</th>
-          <th class="col-size">Size</th>
-          <th class="col-time">Time</th>
+          <th class="col-method" data-sort="method">Method</th>
+          <th class="col-status" data-sort="status">Status</th>
+          <th class="col-name" data-sort="name">Name</th>
+          <th class="col-type" data-sort="type">Type</th>
+          <th class="col-size" data-sort="size">Size</th>
+          <th class="col-time" data-sort="time">Time</th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
